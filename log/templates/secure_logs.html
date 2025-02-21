@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <title>🚀 Secure Logs - Log Management System</title>
+
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+
+    <!-- jQuery -->
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+
+    <!-- Custom Styles -->
+    <style>
+        /* Gradient Background */
+        body {
+            background: linear-gradient(to right, #4e54c8, #8f94fb);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0;
+            font-family: 'Arial', sans-serif;
+        }
+
+        .container {
+            background: #fff;
+            padding: 40px;
+            border-radius: 16px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+            animation: fadeIn 0.6s ease-in-out;
+            max-width: 1200px;
+        }
+
+        /* Fade-in Animation */
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        h1 {
+            font-weight: 700;
+            color: #4e54c8;
+        }
+
+        /* Button Customization */
+        .btn-custom {
+            transition: background 0.3s ease;
+        }
+
+        .btn-custom:hover {
+            opacity: 0.9;
+        }
+
+        .search-input {
+            border-radius: 30px;
+            padding-left: 20px;
+        }
+
+        /* Badge Styles */
+        .badge {
+            font-size: 14px;
+            padding: 6px 12px;
+            border-radius: 12px;
+        }
+
+        .table th {
+            background: #4e54c8;
+            color: white;
+        }
+
+        /* No Logs Message */
+        .no-logs {
+            text-align: center;
+            font-weight: bold;
+            color: #dc3545;
+        }
+    </style>
+
+</head>
+
+<body>
+
+    <div class="container">
+
+        <!-- Page Title -->
+        <h1 class="text-center mb-4">🚀 Secure Logs - Log Management System</h1>
+
+        <!-- Navigation Buttons -->
+        <div class="d-flex justify-content-between mb-4">
+            <a href="/logout" class="btn btn-danger btn-custom">🔒 Logout</a>
+            <a href="/download_logs" class="btn btn-success btn-custom">⬇ Download Logs (CSV)</a>
+        </div>
+
+        <!-- Search Bar -->
+        <div class="input-group mb-4">
+            <input type="text" id="searchInput" class="form-control search-input" placeholder="🔍 Enter search term...">
+            <button class="btn btn-outline-primary" onclick="searchLogs()">Search</button>
+            <button class="btn btn-outline-secondary" onclick="clearSearch()">Clear</button>
+        </div>
+
+        <!-- Logs Table -->
+        <div class="table-responsive">
+            <table class="table table-hover table-bordered" id="logsTable">
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>Log Level</th>
+                        <th>Log Message</th>
+                        <th>Details</th>
+                        <th>Timestamp</th>
+                    </tr>
+                </thead>
+                <tbody id="logBody">
+                    {% if logs %}
+                        {% for log in logs %}
+                            <tr>
+                                <td>{{ loop.index }}</td>
+                                <td>
+                                    {% if log.log_level == "ERROR" %}
+                                        <span class="badge bg-danger">❌ {{ log.log_level }}</span>
+                                    {% elif log.log_level == "DEBUG" %}
+                                        <span class="badge bg-warning">🐞 {{ log.log_level }}</span>
+                                    {% elif log.log_level == "WARNING" %}
+                                        <span class="badge bg-warning">⚠ {{ log.log_level }}</span>
+                                    {% else %}
+                                        <span class="badge bg-success">ℹ {{ log.log_level }}</span>
+                                    {% endif %}
+                                </td>
+                                <td>{{ log.log_message }}</td>
+                                <td>{{ log.message }}</td>
+                                <td>{{ log.timestamp }}</td>
+                            </tr>
+                        {% endfor %}
+                    {% else %}
+                        <tr>
+                            <td colspan="5" class="no-logs">🚫 No logs available</td>
+                        </tr>
+                    {% endif %}
+                </tbody>
+            </table>
+        </div>
+
+    </div>
+
+    <!-- JavaScript for Search -->
+    <script>
+        // Search Logs Function
+        function searchLogs() {
+            const query = document.getElementById("searchInput").value.trim();
+
+            if (!query) {
+                alert("⚠ Please enter a search term!");
+                return;
+            }
+
+            fetch(`/search_logs?query=${encodeURIComponent(query)}`)
+                .then(response => response.json())
+                .then(data => {
+                    const logBody = document.getElementById("logBody");
+                    logBody.innerHTML = "";
+
+                    // If no matching logs
+                    if (data.length === 0) {
+                        logBody.innerHTML = '<tr><td colspan="5" class="text-center">❌ No matching logs found!</td></tr>';
+                        return;
+                    }
+
+                    // Populate search results
+                    data.forEach((log, index) => {
+                        const badgeClass = log.log_level === "ERROR" ? "bg-danger" :
+                                           log.log_level === "DEBUG" ? "bg-warning" : "bg-success";
+
+                        const row = `
+                            <tr>
+                                <td>${index + 1}</td>
+                                <td><span class="badge ${badgeClass}">${log.log_level}</span></td>
+                                <td>${log.log_message}</td>
+                                <td>${log.message}</td>
+                                <td>${log.timestamp}</td>
+                            </tr>
+                        `;
+                        logBody.innerHTML += row;
+                    });
+                })
+                .catch(error => {
+                    console.error("Error fetching logs:", error);
+                    alert("❌ Error fetching logs!");
+                });
+        }
+
+        // Clear Search
+        function clearSearch() {
+            document.getElementById("searchInput").value = '';
+            location.reload();
+        }
+    </script>
+
+</body>
+
+</html>
